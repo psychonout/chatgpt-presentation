@@ -9,7 +9,7 @@ class OpenAIClient:
     def __init__(self) -> None:
         self.openai = openai
 
-    def get_chat_completion(self, prompt: str, params: dict[str, Any] | None = None) -> None:
+    def get_chat_completion(self, prompt: str, params: dict[str, Any] | None = None) -> str:
         messages = [
             {"role": "system", "content": settings.system_message},
             {"role": "user", "content": prompt},
