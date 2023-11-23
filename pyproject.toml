@@ -18,12 +18,9 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 
-[tool.black]
+[tool.ruff]
 line-length = 120
 
-[tool.isort]
-profile = "black"
-line_length = 120
 
 [tool.pylint]
 [tool.pylint.'MESSAGE-CONTROL']
