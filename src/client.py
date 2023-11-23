@@ -1,8 +1,10 @@
 from typing import Any
 
 from openai import OpenAI
+from PIL import Image
 
 from config import settings
+from utils import download_file
 
 
 class OpenAIClient:
@@ -33,8 +35,10 @@ class OpenAIClient:
 
         return response.data[0].url
 
-    def get_response(self, prompt: str, params: dict[str, Any] | None = None) -> str:
+    def get_response(self, prompt: str, params: dict[str, Any] | None = None) -> str | Image.Image:
         if params.get("mode") and params["mode"] == "image":
-            return self.get_generated_image(prompt, params)
+            image_url = self.get_generated_image(prompt, params)
+            filename = download_file(image_url)
+            return Image.open(filename)
 
         return self.get_chat_completion(prompt, params)

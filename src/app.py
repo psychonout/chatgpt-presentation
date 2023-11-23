@@ -5,31 +5,15 @@ from loguru import logger
 
 from client import OpenAIClient
 from config import settings
+from utils import get_image_price
 
 chatbot = OpenAIClient()
 
 
 def page_setup() -> None:
     st.set_page_config(page_title="ChatGPT - Presentation")
-
-
-def calculate_image_price(params: dict[str, Any]) -> None:
-    if params.get("image_model") == "dall-e-2":
-        match params.get("image_size"):
-            case "256x256":
-                return 0.016
-            case "512x512":
-                return 0.018
-            case "1024x1024":
-                return 0.02
-
-    if params.get("image_model") == "dall-e-3":
-        if params.get("image_quality") == "standard" and params.get("image_resolution") == "1024x1024":
-            return 0.04
-        if params.get("image_quality") == "hd" and set(params["image_resolution"].split("x")) == set(["1024", "1792"]):
-            return 0.12
-        else:
-            return 0.08
+    if "messages" not in st.session_state:
+        st.session_state.messages = [{"role": "ai", "content": "Would you care to chat, m8?", "mode": "text"}]
 
 
 def sidebar() -> None:
@@ -65,25 +49,35 @@ def sidebar() -> None:
         st.title("Image params")
         st.selectbox(label="Image Model", options=["dall-e-2", "dall-e-3"], key="image_model")
         st.selectbox(
-            label="Image Size", options=["256x256", "512x512", "1024x1024", "1024x1792", "1792x1024"], key="image_size"
+            label="Image Size",
+            options=["256x256", "512x512", "1024x1024", "1024x1792", "1792x1024"],
+            key="image_size",
         )
         st.selectbox(label="Image Quality", options=["standard", "hd"], key="image_quality")
-        st.text(calculate_image_price(st.session_state))
+        st.text(f"${get_image_price(st.session_state)}")
 
 
-def main_window() -> None:
-    logger.info(st.session_state)
+def generate_message(message: dict[str, Any]) -> None:
+    if "mode" in message and message["mode"] == "image":
+        st.image(message["content"])
+    else:
+        st.markdown(message["content"])
 
-    if "messages" not in st.session_state:
-        st.session_state.messages = [{"role": "ai", "content": "Would you care to chat, m8?"}]
 
+def update_chat_messages() -> None:
     for message in st.session_state.messages:
         avatar = settings.avatar if message["role"] == "ai" else None
         with st.chat_message(message["role"], avatar=avatar):
-            st.markdown(message["content"])
+            generate_message(message)
+
+
+def main_window() -> None:
+    logger.debug(st.session_state)
+
+    update_chat_messages()
 
     if question := st.chat_input("Type in your question..."):
-        st.session_state.messages.append({"role": "user", "content": question})
+        st.session_state.messages.append({"role": "user", "content": question, "mode": "text"})
 
         with st.chat_message("user"):
             st.markdown(question)
@@ -91,9 +85,9 @@ def main_window() -> None:
         with st.chat_message("assistant", avatar=settings.avatar):
             with st.spinner(text="Inventing an answer..."):
                 chatbot_response = chatbot.get_response(question, st.session_state)
-                st.session_state.messages.append({"role": "ai", "content": chatbot_response})
-
-                st.markdown(chatbot_response)
+                new_message = {"role": "ai", "content": chatbot_response, "mode": st.session_state["mode"]}
+                st.session_state.messages.append(new_message)
+                generate_message(new_message)
 
 
 if __name__ == "__main__":
