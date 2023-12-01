@@ -11,7 +11,7 @@ class OpenAIClient:
     def __init__(self) -> None:
         self.client = OpenAI(api_key=settings.openai_api_key)
 
-    def get_chat_completion(self, prompt: str, params: dict[str, Any]) -> str:
+    def get_chat_completion(self, prompt: str, params: dict[str, Any]) -> str | None:
         messages = [
             {"role": "system", "content": params.get("system_message", settings.system_message)},
             {"role": "user", "content": prompt},
@@ -23,7 +23,7 @@ class OpenAIClient:
             temperature=params.get("temperature", settings.temperature),
         )
 
-        return response.choices[0]["text"]
+        return response.choices[0].message.content
 
     def get_generated_image(self, prompt: str, params: dict[str, Any]) -> str | None:
         response = self.client.images.generate(
@@ -33,9 +33,9 @@ class OpenAIClient:
             quality=params.get("image_quality", settings.image_quality),
         )
 
-        return response.data[0]["url"]
+        return response.data[0].url
 
-    def get_response(self, prompt: str, params: dict[str, Any]) -> str | Image.Image:
+    def get_response(self, prompt: str, params: dict[str, Any]) -> str | Image.Image | None:
         if params.get("mode") and params["mode"] == "image":
             image_url = self.get_generated_image(prompt, params)
             if not image_url:
