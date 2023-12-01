@@ -5,7 +5,7 @@ from uuid import uuid4
 import requests
 
 
-def get_image_price(params: dict[str, Any]) -> None:
+def get_image_price(params: dict[str, Any]) -> float | None:
     if params.get("image_model") == "dall-e-2":
         match params.get("image_size"):
             case "256x256":
@@ -23,12 +23,14 @@ def get_image_price(params: dict[str, Any]) -> None:
         else:
             return 0.08
 
+    return None
 
-def download_file(url: str) -> None:
+
+def download_file(url: str) -> str:
     filename = os.path.join(os.getcwd(), "img", str(uuid4()) + ".jpg")
 
     with open(filename, "wb") as f:
-        response = requests.get(url)
+        response = requests.get(url, timeout=5)
         f.write(response.content)
 
     return filename

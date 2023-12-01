@@ -9,6 +9,7 @@ class Settings(BaseSettings):
 
     system_message: str = "You are a helpful assistant."
     temperature: float = 0.7
+    text_engine: str = "gpt-3.5-turbo"
 
     image_model: str = "image-alpha-001"
     image_size: str = "1024x1024"

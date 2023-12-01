@@ -54,7 +54,7 @@ def sidebar() -> None:
             key="image_size",
         )
         st.selectbox(label="Image Quality", options=["standard", "hd"], key="image_quality")
-        st.text(f"${get_image_price(st.session_state)}")
+        st.text(f"${get_image_price(st.session_state.to_dict())}")
 
 
 def generate_message(message: dict[str, Any]) -> None:
@@ -84,7 +84,7 @@ def main_window() -> None:
 
         with st.chat_message("assistant", avatar=settings.avatar):
             with st.spinner(text="Inventing an answer..."):
-                chatbot_response = chatbot.get_response(question, st.session_state)
+                chatbot_response = chatbot.get_response(question, st.session_state.to_dict())
                 new_message = {"role": "ai", "content": chatbot_response, "mode": st.session_state["mode"]}
                 st.session_state.messages.append(new_message)
                 generate_message(new_message)
