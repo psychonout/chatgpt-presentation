@@ -1,60 +1,75 @@
 from typing import Any
 
 import streamlit as st
-from loguru import logger
-
 from client import OpenAIClient
 from config import settings
+from loguru import logger
 from utils import get_image_price
 
 chatbot = OpenAIClient()
 
 
 def page_setup() -> None:
+    logger.debug("Setting up the page...")
     st.set_page_config(page_title="ChatGPT - Presentation")
     if "messages" not in st.session_state:
         st.session_state.messages = [{"role": "ai", "content": "Would you care to chat, m8?", "mode": "text"}]
 
 
+def text_chat_mode() -> None:
+    st.title("Chat params")
+    st.selectbox(
+        label="Text Engine",
+        options=[
+            "gpt-3.5-turbo",
+            "gpt-3.5-turbo-0301",
+            "gpt-3.5-turbo-0613",
+            "gpt-3.5-turbo-1106",
+            "gpt-3.5-turbo-16k-0613",
+            "gpt-3.5-turbo-16k",
+            "gpt-4-0314",
+            "gpt-4-0613",
+            "gpt-4-1106-preview",
+            "gpt-4-32k-0314",
+            "gpt-4-32k-0613",
+            "gpt-4-32k",
+            "gpt-4-vision-preview",
+            "gpt-4",
+            "gpt-4o",
+        ],
+        key="text_engine",
+    )
+    st.text_area(label="System Message", value=settings.system_message, key="system_message")
+    st.number_input(label="Temperature", value=settings.temperature, key="temperature")
+    st.divider()
+
+
+def image_chat_mode() -> None:
+    st.title("Image params")
+    st.selectbox(label="Image Model", options=["dall-e-2", "dall-e-3"], key="image_model")
+    st.selectbox(
+        label="Image Size",
+        options=["256x256", "512x512", "1024x1024", "1024x1792", "1792x1024"],
+        key="image_size",
+    )
+    st.selectbox(label="Image Quality", options=["standard", "hd"], key="image_quality")
+    st.text(f"${get_image_price(st.session_state.to_dict())}")
+
+
+def chat_modes() -> dict[str, Any]:
+    return {
+        "text": text_chat_mode,
+        # "image": image_chat_mode,
+    }
+
+
 def sidebar() -> None:
     with st.sidebar:
-        st.radio("Chat mode", ["text", "image"], key="mode")
+        st.radio("Chat mode", chat_modes().keys(), key="mode")
         st.divider()
 
-        st.title("Chat params")
-        st.selectbox(
-            label="Text Engine",
-            options=[
-                "gpt-3.5-turbo",
-                "gpt-3.5-turbo-0301",
-                "gpt-3.5-turbo-0613",
-                "gpt-3.5-turbo-1106",
-                "gpt-3.5-turbo-16k-0613",
-                "gpt-3.5-turbo-16k",
-                "gpt-4-0314",
-                "gpt-4-0613",
-                "gpt-4-1106-preview",
-                "gpt-4-32k-0314",
-                "gpt-4-32k-0613",
-                "gpt-4-32k",
-                "gpt-4-vision-preview",
-                "gpt-4",
-            ],
-            key="text_engine",
-        )
-        st.text_input(label="System Message", value=settings.system_message, key="system_message")
-        st.number_input(label="Temperature", value=settings.temperature, key="temperature")
-        st.divider()
-
-        st.title("Image params")
-        st.selectbox(label="Image Model", options=["dall-e-2", "dall-e-3"], key="image_model")
-        st.selectbox(
-            label="Image Size",
-            options=["256x256", "512x512", "1024x1024", "1024x1792", "1792x1024"],
-            key="image_size",
-        )
-        st.selectbox(label="Image Quality", options=["standard", "hd"], key="image_quality")
-        st.text(f"${get_image_price(st.session_state.to_dict())}")
+        for mode, chat_mode in chat_modes().items():
+            chat_mode()
 
 
 def generate_message(message: dict[str, Any]) -> None:
